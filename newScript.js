@@ -76,10 +76,6 @@ var blockLauncher = function () {
 		}	
 }
 
-var blockName = function(){
-	var name = ('block'+idNumber);
-	return name;
-}
 
 var blockBuilder = function(){
 
