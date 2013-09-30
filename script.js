@@ -1,183 +1,184 @@
-var idNumber = 1;
-	var level = 1;
-	var player = ('')
-	
-	var blockBuilder = function(blockId){
-		
-		
-	
-		var width = $('#game_area').width();
-	
-		var blockName = ('block'+blockId);
-	
-		$('#game_area').prepend('<div class = "block" id=' + blockName + '></div>');
-		var color = getRandom(1,4);
-		var blockWidth = $('#'+blockName).width();
-		var gameWidth = (width - blockWidth);
-		
-		switch(color){
-		
-		case 1:
-			$('#'+blockName).css("background-color","red");
-			break;
-		case 2:
-			$('#'+blockName).css("background-color","green");	
-			break;
-		case 3:
-			$('#'+blockName).css("background-color","gold");
-			break;
-		case 4:
-			$('#'+blockName).css("background-color","blue");
-			break;
-		} // end color switch
-		
-		var setLeft = getRandom(1,gameWidth);
-		
-		 $('#'+blockName).css("left",+setLeft);
-		
-		$('#'+blockName).click(function(){
-			$(this).hide('explode',{pieces:16},250,function(){levelUp(blockId);});
-			
-			
-			
-		}); // ends click and destroy	
-	
-		checkStatus(blockId);
-		
-		
-	}; // end block builder
+$(document).ready(function() {
 
-	
-	var getPosition = function (blockId) {
-		var blockName = ('#block'+blockId);
-		var position = $(blockName).position().top;
-		return position;
-		
-	
-		
+
+var AreaMaker = function (){
+
+	this.getWidth = function() {
+		var width = $('#game_area').width();
+		return width;
 	};
-	
-	var checkStatus = function (blockId) {
-		var gameHeight = $('#game_area').height();
-		var blockName = ('#block'+blockId);
-		var position = getPosition(blockId);
-		var blockHeight = $(blockName).height();
-		
-		
-		if (position >= (gameHeight-blockHeight)) {
-		
-			$('.block').stop().fadeOut('slow');
-			alert('GAME OVER');
-			
-			
-		}else{
-		
-			dropIt(blockId);
-			
-		}
+	this.getHeight = function() {
+		var height = $('#game_area').height();
+		return height;
 	};
+
+	this.gameWidth = this.getWidth();
+	this.gameHeight = this.getHeight();
 	
-	var dropIt = function(blockId) {
-		var blockName = ('#block'+blockId);
-		var speed = 2;
-		
-		
-		
-		$(blockName).animate({top:'+='+speed},10,function(){checkStatus(blockId);});
-			
-		
-		};
-		
+};
+
+var GameMaker = function(gameArea) {
+
+	this.level = 1;
+	this.gameOver = false;
 	
-	var getRandom = function(min,max) {
+	this.getRandom = function(min,max) {
 		var number = Math.floor(Math.random() * (max - min + 1)) + min;
 		return number;
-		};
+	};
 	
+	this.getColor = function() {
+		var color = this.getRandom(1,4);
+		switch(color) {
+			case 1:
+				color = "red";
+				break;
+			case 2:
+				color = "green";	
+				break;
+			case 3:
+				color = "gold";
+				break;
+			case 4:
+				color = "blue";
+				break;
+		}
+		return color;
+	};
 	
-	var blockLauncher = function(level) {
+	this.setLeft = function(blockName) {
+		var name = '#'+blockName;
+		var gameWidth = gameArea.gameWidth;
+		var blockWidth = $(name).width();
+		var width = gameWidth - blockWidth;
+		var leftPosition = this.getRandom(1,width);
+		return leftPosition;
+	};
 	
-		i = 0;
+	this.reset = function(){
+		this.level=1;
+		var myClass = this;
+		setTimeout(function(){
+		$('.block').remove();
+		},500)
+		$('#game_area').append('<button id="reset" class="big_button">PLAY AGAIN</button>');
+            // add event binding for new button
+            $(document).on("click", '#reset', function () {
+			$('#reset').effect('explode',750,function(){$('#reset').remove();});
+			$('#footer').html('<h2>Level: 1</h2>'); 
+			
+			$('.block').remove();
+			myClass.blockLauncher(myClass.level);
+		});
+	};
+	
+	this.blockName =function(number){
+		name = 'block'+number;
+		return name;
+	};
+	
+	this.levelUp = function(blockName){
+		$('#'+blockName).remove();
+	
+		if($('#game_area').children().length === 0 ) {
+			this.level++;
+			var level = this.level;
+			$('#footer').html('<h2>Level:' +level+'</h2>');  // updates the footer with the new level
+			this.blockLauncher(level);
+		}
+	};
+
+	this.blockBuilder = function(name){
+		var blockName = name;
+		$('#game_area').prepend('<div class = "block" id=' + blockName + '></div>');
+		$('body').disableSelection();
+		var color = this.getColor();
+		$('#'+blockName).css("background-color",color);
 		
+		var leftPosition = this.setLeft(blockName);
+		$('#'+blockName).css("left",+leftPosition);
+		
+		var myClass = this;
+			
+		$('#'+blockName).click(function(){
+			$(this).hide('explode',{pieces:16},250,function(){myClass.levelUp(blockName);});
+		});
+		
+		this.checkStatus(blockName);
+	};
 	
+	
+			
+	this.getPosition = function(blockName){
+		var name = '#'+blockName;
+		var position = $(name).position().top;
+		return position;
+	};
+	
+	this.checkStatus = function(blockName){
+		var name = '#'+blockName;
+		var gameHeight = gameArea.gameHeight;
+		var position = this.getPosition(blockName);
+		var blockHeight = $(name).height();
+		if(position >= (gameHeight - blockHeight)) {
+			$('.block').stop().fadeOut('slow');
+			this.gameOver = true;
+			alert('Game Over');
+			this.reset();
+		}else{
+			this.dropIt(blockName);
+		}
+	};
+		
+	this.dropIt = function(blockName){
+		var name='#'+blockName;
+		var speed = 2;
+		var myClass = this;
+		//var check = this.checkStatus(blockName);
+		$(name).animate({top:'+='+speed},10,function(){myClass.checkStatus(blockName);});
+	};
+	
+	this.blockLauncher = function(level) {
+		this.gameOver=false;
+		var i = 0;
+		var myClass = this;
+
 		var launch = function () {
-		
 			
 			setTimeout(function(){ // loop repeats every half second
-			
-			var idNumber = i;
-			var blockId = (''+idNumber);
-		
-			blockBuilder(blockId); // calls the function that creates the block
+			var blockName = myClass.blockName(i);
+			$('#'+blockName).remove();
+			myClass.blockBuilder(blockName); // calls the function that creates the block
 			i++;
-			
-			if(i<level) {
+			if(i<level && myClass.gameOver==false) {
 			launch();
 			}
-		
-			},500)
-		};
+		},500)
+			if(this.gameOver==true){
+			$('.block').remove();
+			}
+		}; // ends launch function
 		
 		launch();
-			
-	
-	};// ends blockLauncher
-	
-	var levelUp = function(blockId) {
-	
-		$('#block'+blockId).remove();  // cleans up exploded blocks
-		
-		
-		if ( $('#game_area').children().length <= 1 ) {  // checks to see if there are any blocks in the game_area.
-			level++;
-			$('#footer').html('<h2>Player: '+player+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Level:' +level+'</h2>');  // updates the footer with the new level
-			blockLauncher(level);
-			} // end if
-		}; // ends level up
-	
-$(document).ready(function() {
 	
 
+	}; // ends blockLauncher object
+}; // ends gameMaker constructor
 
-	$('#start_button').prop('disabled',true);
-	
-
-	$('#name_button').click(function(){
-
-
-	player = prompt('Please enter your name');
-	
-	if(player !== ('')) {
-	
-		$('#start_button').prop('disabled',false);
-		$('#name_button').effect("explode", 750,function(){$('#name_button').remove();});
-		
-		$('#footer').html('<h2>Player: '+player+'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Level:' +level+'</h2>');
-		} else {
-		
-		player = prompt('Please enter your name');
-	
-	
-	} // ends player name if else block
-	
-	
-}); // ends name button click function
 
 $('#start_button').click(function(){
 	
+	var gameArea = new AreaMaker();
+	var blockBlaster = new GameMaker(gameArea);
+
 		
 		$('#start_button').effect('explode',750,function(){$('#start_button').remove();});
-
-		alert('Click the blocks before they hit the bottom!');
+		$('#footer').html('<h2>Level: 1</h2>');
+		
+		
+	blockBlaster.blockLauncher(blockBlaster.level);
 	
-		blockLauncher(level);
-
-		
-		
-		}); // ends start button click
-
-
-
-					
-					
+}); // ends start button click
+			
+				
 }); // ends document ready
